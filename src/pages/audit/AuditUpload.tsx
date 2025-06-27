@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Upload, 
-  File, 
+  File as FileIcon, 
   Lock, 
   CheckCircle, 
   ArrowRight, 
@@ -175,7 +175,7 @@ const AuditUpload: React.FC<AuditUploadProps> = ({ reportType, onNext, onBack })
             
             <div className="flex items-center justify-center space-x-6 text-sm text-white/50 mb-8">
               <span className="flex items-center space-x-2">
-                <File className="w-5 h-5" />
+                <FileIcon className="w-5 h-5" />
                 <span>PDF format only</span>
               </span>
               <span>•</span>
