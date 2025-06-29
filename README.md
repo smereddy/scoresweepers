@@ -90,22 +90,44 @@ src/
 │   ├── DashboardLayout.tsx
 │   ├── ErrorBoundary.tsx
 │   ├── LoadingSpinner.tsx
-│   └── ProtectedRoute.tsx
+│   ├── ProtectedRoute.tsx
+│   ├── ReportRequestGuide.tsx
+│   ├── StripeCheckout.tsx
+│   └── SubscriptionStatus.tsx
 ├── contexts/           # React contexts
 │   └── AuthContext.tsx
 ├── data/              # Mock data and types
-│   └── mockData.ts
+│   ├── auditWorkflow.ts
+│   ├── consumerReportData.ts
+│   ├── creditReportData.ts
+│   ├── mockData.ts
+│   └── reportingAgencies.ts
+├── hooks/             # Custom React hooks
+│   ├── useStripe.ts
+│   └── useSubscription.ts
 ├── lib/               # Utilities and configurations
 │   ├── config.ts
 │   └── supabase.ts
 ├── pages/             # Page components
 │   ├── audit/
-│   │   └── AuditWizard.tsx
+│   │   ├── AuditGeneration.tsx
+│   │   ├── AuditProcessing.tsx
+│   │   ├── AuditReview.tsx
+│   │   ├── AuditSetup.tsx
+│   │   ├── AuditUpload.tsx
+│   │   ├── AuditWizard.tsx
+│   │   └── EnhancedAuditWizard.tsx
 │   ├── dashboard/
-│   │   ├── Dashboard*.tsx
+│   │   ├── DashboardGenerate.tsx
+│   │   ├── DashboardReview.tsx
+│   │   └── DashboardUpload.tsx
+│   ├── CancelPage.tsx
 │   ├── Dashboard.tsx
 │   ├── LandingPage.tsx
-│   └── LoginPage.tsx
+│   ├── LoginPage.tsx
+│   ├── SignupPage.tsx
+│   └── SuccessPage.tsx
+├── stripe-config.ts   # Stripe product configuration
 └── App.tsx           # Main application component
 ```
 
@@ -131,7 +153,7 @@ src/
 
 ## Database Schema
 
-The application uses Supabase with the following main table:
+The application uses Supabase with the following main tables:
 
 ### `beta_waitlist`
 - `id` (uuid, primary key)
@@ -140,6 +162,11 @@ The application uses Supabase with the following main table:
 - `note` (text, optional)
 - `status` (text, default 'pending')
 - `created_at` (timestamp)
+
+### Stripe Integration Tables
+- `stripe_customers` - Links users to Stripe customers
+- `stripe_subscriptions` - Manages subscription data
+- `stripe_orders` - Stores order/purchase information
 
 ## Authentication
 
