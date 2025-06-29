@@ -6,7 +6,7 @@ describe('LoadingSpinner', () => {
   it('renders with default props', () => {
     render(<LoadingSpinner />);
     
-    const spinner = screen.getByRole('status', { hidden: true });
+    const spinner = screen.getByRole('status');
     expect(spinner).toBeInTheDocument();
   });
 

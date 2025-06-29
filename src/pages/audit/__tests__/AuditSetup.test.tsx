@@ -22,8 +22,11 @@ describe('AuditSetup', () => {
   it('shows bureau selection after selecting credit report', () => {
     render(<AuditSetup onNext={mockOnNext} />);
     
-    const creditReportOption = screen.getByLabelText(/Credit Report/);
-    fireEvent.click(creditReportOption);
+    // Find all elements that contain "Credit Report" text
+    const elements = screen.getAllByText(/Credit Report/);
+    
+    // Click the first one (which should be the button/card)
+    fireEvent.click(elements[0]);
     
     expect(screen.getByText('Select Credit Bureaus')).toBeInTheDocument();
     expect(screen.getByText('Experian')).toBeInTheDocument();
@@ -34,8 +37,11 @@ describe('AuditSetup', () => {
   it('shows agency selection after selecting consumer report', () => {
     render(<AuditSetup onNext={mockOnNext} />);
     
-    const consumerReportOption = screen.getByLabelText(/Consumer Report/);
-    fireEvent.click(consumerReportOption);
+    // Find all elements that contain "Consumer Report" text
+    const elements = screen.getAllByText(/Consumer Report/);
+    
+    // Click the first one (which should be the button/card)
+    fireEvent.click(elements[0]);
     
     expect(screen.getByText('Select Reporting Agencies')).toBeInTheDocument();
     expect(screen.getByText('LexisNexis')).toBeInTheDocument();
@@ -47,26 +53,26 @@ describe('AuditSetup', () => {
     
     // Initially disabled
     const continueButton = screen.getByText('Continue to Upload');
-    expect(continueButton).toBeDisabled();
+    expect(continueButton.closest('button')).toBeDisabled();
     
     // Select credit report
-    const creditReportOption = screen.getByLabelText(/Credit Report/);
-    fireEvent.click(creditReportOption);
+    const creditReportElements = screen.getAllByText(/Credit Report/);
+    fireEvent.click(creditReportElements[0]);
     
     // Select a bureau
     const experianOption = screen.getByText('Experian');
     fireEvent.click(experianOption);
     
     // Should be enabled now
-    expect(continueButton).not.toBeDisabled();
+    expect(continueButton.closest('button')).not.toBeDisabled();
   });
 
   it('calls onNext with correct data when continue is clicked', () => {
     render(<AuditSetup onNext={mockOnNext} />);
     
     // Select credit report
-    const creditReportOption = screen.getByLabelText(/Credit Report/);
-    fireEvent.click(creditReportOption);
+    const creditReportElements = screen.getAllByText(/Credit Report/);
+    fireEvent.click(creditReportElements[0]);
     
     // Select a bureau
     const experianOption = screen.getByText('Experian');
@@ -86,8 +92,8 @@ describe('AuditSetup', () => {
   it('renders purpose input field', () => {
     render(<AuditSetup onNext={mockOnNext} />);
     
-    const creditReportOption = screen.getByLabelText(/Credit Report/);
-    fireEvent.click(creditReportOption);
+    const creditReportElements = screen.getAllByText(/Credit Report/);
+    fireEvent.click(creditReportElements[0]);
     
     expect(screen.getByText('Purpose (Optional)')).toBeInTheDocument();
     expect(screen.getByPlaceholderText(/e.g., Mortgage application/)).toBeInTheDocument();
@@ -96,8 +102,8 @@ describe('AuditSetup', () => {
   it('renders common issues info', () => {
     render(<AuditSetup onNext={mockOnNext} />);
     
-    const creditReportOption = screen.getByLabelText(/Credit Report/);
-    fireEvent.click(creditReportOption);
+    const creditReportElements = screen.getAllByText(/Credit Report/);
+    fireEvent.click(creditReportElements[0]);
     
     expect(screen.getByText('Common Issues We Detect')).toBeInTheDocument();
     expect(screen.getByText('Incorrect payment history')).toBeInTheDocument();

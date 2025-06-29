@@ -34,7 +34,7 @@ describe('useStripe', () => {
     });
 
     expect(checkoutData).toBe(null);
-    expect(result.current.error).toMatch(/demo mode/i);
+    expect(result.current.error).toContain('demo mode');
   });
 
   it('sets loading state during checkout creation', async () => {
@@ -60,8 +60,6 @@ describe('useStripe', () => {
   });
 
   it('handles errors correctly', async () => {
-    const mockErrorMessage = 'Stripe payments are not available in demo mode';
-    
     const { result } = renderHook(() => useStripe(), { wrapper });
 
     await act(async () => {
