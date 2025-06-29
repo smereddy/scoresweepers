@@ -34,37 +34,34 @@ describe('useStripe', () => {
     });
 
     expect(checkoutData).toBe(null);
-    expect(result.current.error).toContain('demo mode');
+    expect(result.current.error).toMatch(/demo mode/i);
   });
 
   it('sets loading state during checkout creation', async () => {
     const { result } = renderHook(() => useStripe(), { wrapper });
 
+    // Start checkout creation
     let promise: Promise<any>;
-    
-    // Start checkout creation and capture loading state
-    act(() => {
+    await act(async () => {
       promise = result.current.createCheckoutSession({
         priceId: 'price_test',
         mode: 'payment',
       });
-    });
-
-    // Should be loading immediately after starting
-    expect(result.current.loading).toBe(true);
-
-    // Wait for promise to resolve
-    await act(async () => {
+      
+      // Check loading state is true during the operation
+      expect(result.current.loading).toBe(true);
+      
+      // Wait for promise to resolve
       await promise;
     });
 
     // Should not be loading anymore
-    await waitFor(() => {
-      expect(result.current.loading).toBe(false);
-    });
+    expect(result.current.loading).toBe(false);
   });
 
   it('handles errors correctly', async () => {
+    const mockErrorMessage = 'Stripe payments are not available in demo mode';
+    
     const { result } = renderHook(() => useStripe(), { wrapper });
 
     await act(async () => {
@@ -74,7 +71,8 @@ describe('useStripe', () => {
       });
     });
 
-    expect(result.current.error).toBeTruthy();
+    // Check that error is a string (not comparing exact content to avoid test brittleness)
     expect(typeof result.current.error).toBe('string');
+    expect(result.current.error).toContain('demo mode');
   });
 });

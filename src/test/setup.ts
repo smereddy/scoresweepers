@@ -1,5 +1,6 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
+import React from 'react';
 
 // Mock framer-motion with proper prop filtering
 vi.mock('framer-motion', () => ({
@@ -58,13 +59,29 @@ vi.mock('../lib/supabase', () => ({
       insert: vi.fn().mockResolvedValue({ data: [], error: null }),
       select: vi.fn().mockReturnValue({
         eq: vi.fn().mockReturnValue({
+          eq: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+            single: vi.fn().mockResolvedValue({ data: null, error: null }),
+          }),
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
+          single: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
         maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
-        order: vi.fn().mockResolvedValue({ data: [], error: null }),
+        order: vi.fn().mockReturnValue({
+          data: [], 
+          error: null
+        }),
       }),
     }),
   },
+  type WaitlistEntry: {
+    id?: string
+    name: string
+    email: string
+    note?: string
+    status?: string
+    created_at?: string
+  }
 }));
 
 // Mock environment variables
@@ -99,7 +116,7 @@ global.File = class MockFile {
 
   constructor(bits: BlobPart[], name: string, options?: FilePropertyBag) {
     this.name = name;
-    this.size = bits.reduce((acc, bit) => acc + (typeof bit === 'string' ? bit.length : bit.size || 0), 0);
+    this.size = bits.reduce((acc, bit) => acc + (typeof bit === 'string' ? bit.length : (bit as any).size || 0), 0);
     this.type = options?.type || '';
     this.lastModified = options?.lastModified || Date.now();
   }
@@ -111,7 +128,7 @@ global.Blob = class MockBlob {
   type: string;
 
   constructor(bits: BlobPart[] = [], options?: BlobPropertyBag) {
-    this.size = bits.reduce((acc, bit) => acc + (typeof bit === 'string' ? bit.length : bit.size || 0), 0);
+    this.size = bits.reduce((acc, bit) => acc + (typeof bit === 'string' ? bit.length : (bit as any).size || 0), 0);
     this.type = options?.type || '';
   }
 } as any;

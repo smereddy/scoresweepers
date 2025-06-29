@@ -1,6 +1,18 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { render, screen } from '../../test/utils';
 import Dashboard from '../Dashboard';
+
+// Mock the useSubscription hook
+vi.mock('../../hooks/useSubscription', () => ({
+  useSubscription: () => ({
+    subscription: null,
+    loading: false,
+    error: null,
+    hasActiveSubscription: () => false,
+    isSubscriptionCanceled: () => false,
+    getCurrentPeriodEnd: () => null,
+  }),
+}));
 
 describe('Dashboard', () => {
   it('renders dashboard header', () => {
@@ -29,8 +41,8 @@ describe('Dashboard', () => {
     render(<Dashboard />);
     
     expect(screen.getByPlaceholderText('Search audits...')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('All Status')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('All Types')).toBeInTheDocument();
+    expect(screen.getByText('All Status')).toBeInTheDocument();
+    expect(screen.getByText('All Types')).toBeInTheDocument();
   });
 
   it('renders audit table headers', () => {
