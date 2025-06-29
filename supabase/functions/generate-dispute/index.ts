@@ -1,10 +1,16 @@
 import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
 import { createClient } from 'npm:@supabase/supabase-js@2.49.1';
+import OpenAI from 'npm:openai@4.28.0';
 
 const supabase = createClient(
   Deno.env.get('SUPABASE_URL') ?? '',
   Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
 );
+
+// Initialize OpenAI client with the user's API key
+const openai = new OpenAI({
+  apiKey: Deno.env.get('OPENAI_API_KEY'),
+});
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -32,8 +38,102 @@ interface DisputeResponse {
   download_url?: string; // For PDF format
 }
 
-// Generate dispute letter content
-function generateDisputeLetter(
+// Generate dispute letter content using OpenAI
+async function generateDisputeLetterWithAI(
+  issues: any[],
+  customizations: any = {},
+  letterType: string = 'dispute'
+): Promise<string> {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      console.log("No OpenAI API key found. Using template-based generation.");
+      return generateDisputeLetterFromTemplate(issues, customizations, letterType);
+    }
+    
+    console.log("Generating dispute letter with OpenAI...");
+    
+    const defaults = {
+      recipientName: 'Credit Bureau Consumer Assistance',
+      recipientAddress: 'P.O. Box 4500, Allen, TX 75013',
+      senderName: 'John Michael Smith',
+      senderAddress: '123 Main Street, Anytown, CA 90210',
+      date: new Date().toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      })
+    };
+
+    const merged = { ...defaults, ...customizations };
+    
+    // Create a prompt for the letter generation
+    const prompt = `
+Generate a professional ${letterType} letter for credit report errors. Use the following information:
+
+SENDER INFORMATION:
+Name: ${merged.senderName}
+Address: ${merged.senderAddress}
+Date: ${merged.date}
+
+RECIPIENT INFORMATION:
+Name: ${merged.recipientName}
+Address: ${merged.recipientAddress}
+
+LETTER TYPE: ${letterType.toUpperCase()}
+
+ISSUES TO DISPUTE:
+${issues.map((issue, index) => `
+${index + 1}. ${issue.type}
+   Description: ${issue.description}
+   Affected Item: ${issue.affectedItem}
+   Recommendation: ${issue.recommendation}
+   Confidence: ${issue.confidence}%
+   Impact: ${issue.potentialImpact}
+`).join('\n')}
+
+REQUIREMENTS:
+1. Follow FCRA (Fair Credit Reporting Act) guidelines
+2. Be professional and concise
+3. Include all necessary legal language
+4. Format as a proper business letter
+5. For dispute letters, cite the 30-day investigation requirement
+6. For validation letters, request specific documentation
+7. For goodwill letters, emphasize customer relationship and future business
+
+Generate ONLY the letter content, no additional commentary.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: Deno.env.get('OPENAI_MODEL') || 'gpt-4o',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'You are an expert in credit repair and FCRA regulations. You write professional, legally compliant dispute letters.' 
+        },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+
+    const letterContent = response.choices[0]?.message?.content || '';
+    
+    if (!letterContent) {
+      throw new Error("OpenAI API did not return expected content");
+    }
+    
+    return letterContent;
+    
+  } catch (error) {
+    console.error("Error generating letter with OpenAI:", error);
+    // Fallback to template-based generation
+    return generateDisputeLetterFromTemplate(issues, customizations, letterType);
+  }
+}
+
+// Generate dispute letter from template (fallback method)
+function generateDisputeLetterFromTemplate(
   issues: any[],
   customizations: any = {},
   letterType: string = 'dispute'
@@ -126,8 +226,74 @@ Enclosures: Supporting documentation`;
   return letterContent;
 }
 
-// Generate phone script
-function generatePhoneScript(issues: any[], bureau: string = 'Credit Bureau'): string {
+// Generate phone script using OpenAI
+async function generatePhoneScriptWithAI(issues: any[], bureau: string = 'Credit Bureau'): Promise<string> {
+  try {
+    const openaiApiKey = Deno.env.get('OPENAI_API_KEY');
+    if (!openaiApiKey) {
+      console.log("No OpenAI API key found. Using template-based script generation.");
+      return generatePhoneScriptFromTemplate(issues, bureau);
+    }
+    
+    console.log("Generating phone script with OpenAI...");
+    
+    // Create a prompt for the script generation
+    const prompt = `
+Generate a professional phone script for disputing credit report errors with ${bureau}. Use the following issues:
+
+ISSUES TO DISPUTE:
+${issues.map((issue, index) => `
+${index + 1}. ${issue.type}
+   Description: ${issue.description}
+   Affected Item: ${issue.affectedItem}
+   Recommendation: ${issue.recommendation}
+   Confidence: ${issue.confidence}%
+   Impact: ${issue.potentialImpact}
+`).join('\n')}
+
+REQUIREMENTS:
+1. Include an introduction section
+2. Create a separate section for each issue to dispute
+3. Include a closing section with follow-up instructions
+4. Add a section for handling common questions/objections
+5. Include a checklist of items to have ready before the call
+6. Format as a clear, easy-to-follow script with section headers
+7. Use professional but conversational language
+8. Include placeholders for personal information like [YOUR NAME]
+
+Generate ONLY the phone script, no additional commentary.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: Deno.env.get('OPENAI_MODEL') || 'gpt-4o',
+      messages: [
+        { 
+          role: 'system', 
+          content: 'You are an expert in credit repair and FCRA regulations. You create effective scripts for disputing credit report errors by phone.' 
+        },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.7,
+      max_tokens: 2000
+    });
+
+    const scriptContent = response.choices[0]?.message?.content || '';
+    
+    if (!scriptContent) {
+      throw new Error("OpenAI API did not return expected content");
+    }
+    
+    return scriptContent;
+    
+  } catch (error) {
+    console.error("Error generating phone script with OpenAI:", error);
+    // Fallback to template-based generation
+    return generatePhoneScriptFromTemplate(issues, bureau);
+  }
+}
+
+// Generate phone script from template (fallback method)
+function generatePhoneScriptFromTemplate(issues: any[], bureau: string = 'Credit Bureau'): string {
   return `PHONE DISPUTE SCRIPT - ${bureau.toUpperCase()}
 
 PREPARATION CHECKLIST:
@@ -284,15 +450,18 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Generate dispute letter
-    const letterContent = generateDisputeLetter(
+    // Generate dispute letter using OpenAI if API key is available
+    const letterContent = await generateDisputeLetterWithAI(
       selectedIssueObjects,
       requestData.customizations,
       requestData.letterType
     );
 
-    // Generate phone script
-    const callScript = generatePhoneScript(selectedIssueObjects);
+    // Generate phone script using OpenAI if API key is available
+    const callScript = await generatePhoneScriptWithAI(
+      selectedIssueObjects,
+      requestData.customizations?.recipientName || 'Credit Bureau'
+    );
 
     const response: DisputeResponse = {
       report_id: reportId,

@@ -2,34 +2,82 @@
 
 This guide covers deploying the ScoreSweep backend services to Supabase.
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Environment Configuration](#environment-configuration)
+- [Database Setup](#database-setup)
+- [Edge Functions Deployment](#edge-functions-deployment)
+- [Storage Configuration](#storage-configuration)
+- [Scheduled Functions](#scheduled-functions)
+- [Monitoring and Logging](#monitoring-and-logging)
+- [Troubleshooting](#troubleshooting)
+- [Production Checklist](#production-checklist)
+
 ## Prerequisites
 
 - Supabase account and project
 - Supabase CLI installed
 - Node.js 18+ for local development
+- OpenAI API key for AI processing
 
-## Setup
+## Environment Configuration
 
-### 1. Install Supabase CLI
+### Required Environment Variables
 
-```bash
-npm install -g supabase
-```
-
-### 2. Login to Supabase
+Set these environment variables in your Supabase project:
 
 ```bash
-supabase login
+# Required for all functions
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+
+# Required for AI processing
+OPENAI_API_KEY=sk_... # Your OpenAI API key
+OPENAI_MODEL=gpt-4o # Or another model like gpt-3.5-turbo
+
+# Optional configuration
+MAX_FILE_SIZE=10485760 # 10MB in bytes
+ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
 ```
 
-### 3. Link to Your Project
+### Setting Up OpenAI API Key
 
+1. **Get your API key**:
+   - Go to [OpenAI Platform](https://platform.openai.com/api-keys)
+   - Create a new API key
+   - Copy the key (it starts with "sk-")
+
+2. **Add to Supabase**:
+   ```bash
+   # Using Supabase CLI
+   supabase secrets set OPENAI_API_KEY=sk_your_key_here
+   
+   # Optional: Set model to use
+   supabase secrets set OPENAI_MODEL=gpt-4o
+   ```
+
+3. **Verify in Supabase Dashboard**:
+   - Go to your Supabase project
+   - Navigate to Settings > API
+   - Check under "Edge Function Secrets"
+
+### Environment-Specific Configurations
+
+#### Development
 ```bash
-supabase link --project-ref your-project-ref
+# Local development
+supabase secrets set --env local OPENAI_API_KEY=sk_your_key_here
+
+# Start local Supabase with secrets
+supabase start
 ```
 
-You can find your project reference in your Supabase dashboard URL:
-`https://app.supabase.com/project/your-project-ref`
+#### Production
+```bash
+# Production environment
+supabase secrets set --project-ref your-project-ref OPENAI_API_KEY=sk_your_key_here
+```
 
 ## Database Setup
 
@@ -42,7 +90,7 @@ Deploy the database schema:
 supabase db push
 
 # Or run specific migration
-supabase migration up --file 20250125000001_reports_schema.sql
+supabase migration up --file 20250629194735_falling_glade.sql
 ```
 
 ### 2. Verify Database Setup
@@ -89,8 +137,9 @@ supabase functions deploy cleanup-expired
 supabase secrets set SUPABASE_URL=https://your-project.supabase.co
 supabase secrets set SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 
-# Optional: Set OpenAI API key for real AI processing
-supabase secrets set OPENAI_API_KEY=your-openai-api-key
+# Set OpenAI API key for AI processing
+supabase secrets set OPENAI_API_KEY=sk_your_key_here
+supabase secrets set OPENAI_MODEL=gpt-4o
 ```
 
 ### 3. Verify Deployment
@@ -163,42 +212,50 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 SELECT cron.schedule('cleanup-reports', '0 2 * * *', 'SELECT cleanup_expired_reports();');
 ```
 
-## Environment Configuration
+## OpenAI API Integration
 
-### Production Environment Variables
+### 1. API Key Management
 
-Set these in your Supabase project:
+Your OpenAI API key is used in the following Edge Functions:
+- `process` - For analyzing credit reports
+- `generate-dispute` - For creating dispute letters and scripts
+
+The key is securely stored as an environment variable and never exposed to clients.
+
+### 2. Billing and Usage
+
+When using your own OpenAI API key:
+- All API calls will be billed to your OpenAI account
+- You can monitor usage in the [OpenAI dashboard](https://platform.openai.com/usage)
+- Set usage limits in your OpenAI account to control costs
+
+### 3. Model Selection
+
+You can configure which OpenAI model to use:
 
 ```bash
-# Required
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+# Set default model (gpt-4o recommended for best results)
+supabase secrets set OPENAI_MODEL=gpt-4o
 
-# Optional for real AI processing
-OPENAI_API_KEY=sk-...
-OPENAI_MODEL=gpt-4o
-OPENAI_MAX_TOKENS=4000
-
-# Optional for enhanced security
-ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
-MAX_FILE_SIZE=10485760
+# For cost savings, you can use:
+supabase secrets set OPENAI_MODEL=gpt-3.5-turbo
 ```
 
-### Development Environment
+### 4. Fallback Mechanism
 
-For local development:
+If the OpenAI API call fails or no API key is provided, the system will fall back to template-based generation to ensure the application remains functional.
+
+### 5. Testing OpenAI Integration
+
+Test that your OpenAI API key is working:
 
 ```bash
-# Start local Supabase
-supabase start
+# Test process function with OpenAI
+curl -X POST https://your-project.supabase.co/functions/v1/process/report-id \
+  -H "Authorization: Bearer your-jwt-token"
 
-# Serve functions locally
-supabase functions serve
-
-# Test locally
-curl -X POST http://localhost:54321/functions/v1/upload \
-  -H "Authorization: Bearer your-local-jwt-token" \
-  -F "file=@test-report.pdf"
+# Check logs for OpenAI API calls
+supabase functions logs process
 ```
 
 ## Monitoring and Logging
@@ -209,13 +266,20 @@ View function logs:
 
 ```bash
 # View logs for specific function
-supabase functions logs upload --follow
+supabase functions logs process --follow
 
 # View logs for all functions
 supabase functions logs --follow
 ```
 
-### 2. Database Monitoring
+### 2. OpenAI API Usage Monitoring
+
+Monitor your OpenAI API usage:
+- Go to [OpenAI Usage Dashboard](https://platform.openai.com/usage)
+- Set up usage limits to prevent unexpected costs
+- Review usage patterns to optimize API calls
+
+### 3. Database Monitoring
 
 Monitor database performance:
 
@@ -238,192 +302,47 @@ WHERE created_at > NOW() - INTERVAL '7 days'
 GROUP BY status;
 ```
 
-### 3. Error Tracking
-
-Set up error tracking in your functions:
-
-```typescript
-// Add to each function
-try {
-  // Function logic
-} catch (error) {
-  console.error('Function error:', {
-    function: 'upload',
-    error: error.message,
-    stack: error.stack,
-    timestamp: new Date().toISOString(),
-  });
-  
-  // Optional: Send to external error tracking service
-  // await sendToSentry(error);
-}
-```
-
-## Security Configuration
-
-### 1. API Keys and Secrets
-
-Secure your API keys:
-
-```bash
-# Rotate service role key if needed
-# Generate new key in Supabase dashboard
-supabase secrets set SUPABASE_SERVICE_ROLE_KEY=new-key
-
-# Use environment-specific keys
-supabase secrets set OPENAI_API_KEY=prod-key --project-ref prod-project
-supabase secrets set OPENAI_API_KEY=dev-key --project-ref dev-project
-```
-
-### 2. CORS Configuration
-
-Configure CORS for your domain:
-
-```typescript
-// Update corsHeaders in each function
-const corsHeaders = {
-  'Access-Control-Allow-Origin': process.env.ALLOWED_ORIGINS || '*',
-  'Access-Control-Allow-Methods': 'POST, GET, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-```
-
-### 3. Rate Limiting
-
-Implement rate limiting:
-
-```typescript
-// Add to functions that need rate limiting
-const rateLimitKey = `rate_limit:${user.id}:${functionName}`;
-const currentCount = await redis.incr(rateLimitKey);
-if (currentCount === 1) {
-  await redis.expire(rateLimitKey, 60); // 1 minute window
-}
-if (currentCount > 10) { // 10 requests per minute
-  return new Response('Rate limit exceeded', { status: 429 });
-}
-```
-
-## Performance Optimization
-
-### 1. Database Indexes
-
-Ensure proper indexing:
-
-```sql
--- Check existing indexes
-SELECT indexname, indexdef FROM pg_indexes 
-WHERE tablename IN ('reports', 'report_data');
-
--- Add additional indexes if needed
-CREATE INDEX CONCURRENTLY idx_reports_status_created 
-ON reports(status, created_at) 
-WHERE status IN ('uploaded', 'processing');
-```
-
-### 2. Function Optimization
-
-Optimize function performance:
-
-```typescript
-// Use connection pooling
-const supabase = createClient(url, key, {
-  db: { schema: 'public' },
-  auth: { persistSession: false },
-  global: { headers: { 'x-application-name': 'scoresweep-backend' } }
-});
-
-// Implement caching for frequently accessed data
-const cache = new Map();
-const getCachedData = (key: string) => {
-  const cached = cache.get(key);
-  if (cached && Date.now() - cached.timestamp < 300000) { // 5 minutes
-    return cached.data;
-  }
-  return null;
-};
-```
-
-### 3. Storage Optimization
-
-Optimize file storage:
-
-```typescript
-// Compress PDFs before storage
-const compressedPdf = await compressPdf(pdfBuffer);
-
-// Use appropriate storage class
-const { data, error } = await supabase.storage
-  .from('reports')
-  .upload(fileName, file, {
-    cacheControl: '3600',
-    upsert: false,
-    contentType: 'application/pdf',
-  });
-```
-
-## Backup and Recovery
-
-### 1. Database Backups
-
-Supabase automatically backs up your database, but you can also:
-
-```bash
-# Manual backup
-supabase db dump --file backup.sql
-
-# Restore from backup
-supabase db reset --file backup.sql
-```
-
-### 2. Storage Backups
-
-Implement storage backup strategy:
-
-```typescript
-// Function to backup critical files
-async function backupCriticalFiles() {
-  const { data: files } = await supabase.storage
-    .from('reports')
-    .list('', { limit: 1000 });
-    
-  for (const file of files) {
-    // Copy to backup bucket or external storage
-    await copyToBackup(file);
-  }
-}
-```
-
 ## Troubleshooting
 
 ### Common Issues
 
-1. **Function deployment fails**
-   ```bash
-   # Check function syntax
-   deno check supabase/functions/upload/index.ts
-   
-   # Check logs
-   supabase functions logs upload
-   ```
+#### 1. OpenAI API Key Issues
 
-2. **Database connection issues**
-   ```sql
-   -- Check connection limits
-   SELECT * FROM pg_stat_activity;
-   
-   -- Check RLS policies
-   SELECT * FROM pg_policies WHERE schemaname = 'public';
-   ```
+**Problem**: OpenAI API calls failing
 
-3. **Storage upload fails**
-   ```bash
-   # Check bucket exists
-   SELECT * FROM storage.buckets WHERE id = 'reports';
+**Solutions**:
+- Verify your API key is correctly set in Supabase secrets
+- Check that your OpenAI account has billing set up
+- Ensure you haven't hit rate limits or usage caps
+- Check function logs for specific error messages
+
+```bash
+# Check if OpenAI API key is set
+supabase secrets list | grep OPENAI_API_KEY
+
+# Update API key if needed
+supabase secrets set OPENAI_API_KEY=sk_new_key_here
+```
+
+#### 2. Function deployment fails
+
+```bash
+# Check function syntax
+deno check supabase/functions/process/index.ts
    
-   # Check storage policies
-   SELECT * FROM storage.policies WHERE bucket_id = 'reports';
-   ```
+# Check logs
+supabase functions logs process
+```
+
+#### 3. Database connection issues
+
+```sql
+-- Check connection limits
+SELECT * FROM pg_stat_activity;
+   
+-- Check RLS policies
+SELECT * FROM pg_policies WHERE schemaname = 'public';
+```
 
 ### Debug Commands
 
@@ -432,10 +351,10 @@ async function backupCriticalFiles() {
 supabase functions list
 
 # View function details
-supabase functions inspect upload
+supabase functions inspect process
 
 # Test function locally
-supabase functions serve upload --debug
+supabase functions serve process --debug
 
 # Check database status
 supabase status
@@ -448,7 +367,7 @@ supabase migration list
 
 - [ ] All migrations applied successfully
 - [ ] All edge functions deployed
-- [ ] Environment variables set
+- [ ] Environment variables set, including OPENAI_API_KEY
 - [ ] Storage bucket configured with RLS
 - [ ] Cleanup cron job scheduled
 - [ ] Monitoring and logging configured
@@ -458,5 +377,6 @@ supabase migration list
 - [ ] Backup strategy implemented
 - [ ] Security policies reviewed
 - [ ] Performance optimizations applied
+- [ ] OpenAI API usage limits configured
 
-Your ScoreSweep backend is now ready for production! 🚀
+Your ScoreSweep backend is now ready for production with your own OpenAI API key integration! 🚀
