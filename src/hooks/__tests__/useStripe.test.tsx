@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { renderHook, waitFor } from '@testing-library/react';
+import { renderHook, waitFor, act } from '@testing-library/react';
 import { useStripe } from '../useStripe';
 import { AuthProvider } from '../../contexts/AuthContext';
 
@@ -25,9 +25,12 @@ describe('useStripe', () => {
   it('handles demo mode correctly', async () => {
     const { result } = renderHook(() => useStripe(), { wrapper });
 
-    const checkoutData = await result.current.createCheckoutSession({
-      priceId: 'price_test',
-      mode: 'payment',
+    let checkoutData;
+    await act(async () => {
+      checkoutData = await result.current.createCheckoutSession({
+        priceId: 'price_test',
+        mode: 'payment',
+      });
     });
 
     expect(checkoutData).toBe(null);
@@ -37,16 +40,23 @@ describe('useStripe', () => {
   it('sets loading state during checkout creation', async () => {
     const { result } = renderHook(() => useStripe(), { wrapper });
 
-    // Start checkout creation
-    const promise = result.current.createCheckoutSession({
-      priceId: 'price_test',
-      mode: 'payment',
+    let promise: Promise<any>;
+    
+    // Start checkout creation and capture loading state
+    act(() => {
+      promise = result.current.createCheckoutSession({
+        priceId: 'price_test',
+        mode: 'payment',
+      });
     });
 
-    // Should be loading
+    // Should be loading immediately after starting
     expect(result.current.loading).toBe(true);
 
-    await promise;
+    // Wait for promise to resolve
+    await act(async () => {
+      await promise;
+    });
 
     // Should not be loading anymore
     await waitFor(() => {
@@ -57,11 +67,14 @@ describe('useStripe', () => {
   it('handles errors correctly', async () => {
     const { result } = renderHook(() => useStripe(), { wrapper });
 
-    await result.current.createCheckoutSession({
-      priceId: 'price_test',
-      mode: 'payment',
+    await act(async () => {
+      await result.current.createCheckoutSession({
+        priceId: 'price_test',
+        mode: 'payment',
+      });
     });
 
     expect(result.current.error).toBeTruthy();
+    expect(typeof result.current.error).toBe('string');
   });
 });

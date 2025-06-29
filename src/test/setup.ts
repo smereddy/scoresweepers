@@ -1,27 +1,30 @@
 import '@testing-library/jest-dom';
 import { vi } from 'vitest';
 
-// Mock framer-motion
+// Mock framer-motion with proper prop filtering
 vi.mock('framer-motion', () => ({
-  motion: {
-    div: 'div',
-    button: 'button',
-    form: 'form',
-    section: 'section',
-    header: 'header',
-    main: 'main',
-    nav: 'nav',
-    aside: 'aside',
-    footer: 'footer',
-    article: 'article',
-    h1: 'h1',
-    h2: 'h2',
-    h3: 'h3',
-    p: 'p',
-    span: 'span',
-    a: 'a',
-    img: 'img',
-  },
+  motion: new Proxy({}, {
+    get: (target, prop) => {
+      // Return a component that filters out framer-motion specific props
+      return ({ children, ...props }: any) => {
+        // Filter out framer-motion specific props
+        const {
+          initial,
+          animate,
+          exit,
+          transition,
+          whileHover,
+          whileTap,
+          variants,
+          ...filteredProps
+        } = props;
+        
+        // Create the appropriate HTML element
+        const Component = prop as string;
+        return React.createElement(Component, filteredProps, children);
+      };
+    }
+  }),
   AnimatePresence: ({ children }: { children: React.ReactNode }) => children,
   useInView: () => true,
 }));
@@ -37,7 +40,7 @@ vi.mock('react-router-dom', async () => {
   };
 });
 
-// Mock Supabase
+// Mock Supabase with proper method chaining
 vi.mock('../lib/supabase', () => ({
   supabase: {
     auth: {
@@ -57,6 +60,7 @@ vi.mock('../lib/supabase', () => ({
         eq: vi.fn().mockReturnValue({
           maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         }),
+        maybeSingle: vi.fn().mockResolvedValue({ data: null, error: null }),
         order: vi.fn().mockResolvedValue({ data: [], error: null }),
       }),
     }),
