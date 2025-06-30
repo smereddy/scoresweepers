@@ -90,6 +90,30 @@ function LandingPage() {
     setSubmitStatus('idle');
     setSubmitError('');
 
+    // Validate inputs
+    if (!name.trim()) {
+      setSubmitError('Please enter your name');
+      setIsSubmitting(false);
+      setSubmitStatus('error');
+      return;
+    }
+
+    if (!email.trim()) {
+      setSubmitError('Please enter your email');
+      setIsSubmitting(false);
+      setSubmitStatus('error');
+      return;
+    }
+
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email.trim())) {
+      setSubmitError('Please enter a valid email address');
+      setIsSubmitting(false);
+      setSubmitStatus('error');
+      return;
+    }
+
     // If using mock auth or demo mode, simulate waitlist submission
     if (isUsingMockAuth || isDemoMode) {
       console.log('📝 Mock waitlist submission:', { name, email, note });
@@ -114,15 +138,15 @@ function LandingPage() {
     try {
       console.log('📝 Submitting waitlist entry...');
       
+      const waitlistEntry: WaitlistEntry = {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        note: note.trim() || null
+      };
+      
       const { data, error } = await supabase
         .from('beta_waitlist')
-        .insert([
-          {
-            name: name.trim(),
-            email: email.trim().toLowerCase(),
-            note: note.trim() || null
-          }
-        ])
+        .insert([waitlistEntry])
         .select();
 
       if (error) {
@@ -136,6 +160,7 @@ function LandingPage() {
         }
         
         setSubmitStatus('error');
+        setIsSubmitting(false);
         return;
       }
 
@@ -750,6 +775,42 @@ function LandingPage() {
           </AnimatedSection>
         </div>
       </section>
+
+      {/* Support Us Section */}
+      {!isDemoMode && donationProduct && (
+        <section className="relative z-10 py-10 px-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <AnimatedSection>
+              <motion.div variants={fadeUpVariants} className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8">
+                <div className="w-16 h-16 bg-[#4C8DFF]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-8 h-8 text-[#4C8DFF]" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 font-space-grotesk">Support ScoreSweep</h3>
+                <p className="text-white/80 font-plus-jakarta mb-6 max-w-xl mx-auto">
+                  Help us build the future of credit repair technology. Your donation supports our development team and helps keep ScoreSweep accessible to everyone.
+                </p>
+                
+                <div className="max-w-xs mx-auto">
+                  <StripeCheckout 
+                    product={donationProduct}
+                    requireAuth={false}
+                    className="mb-4"
+                  >
+                    <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]">
+                      <Coffee className="w-5 h-5" />
+                      <span className="font-plus-jakarta">Buy Us a Coffee - {donationProduct.price}</span>
+                    </div>
+                  </StripeCheckout>
+                  
+                  <p className="text-sm text-white/60 font-plus-jakarta">
+                    No account required. Powered by Stripe secure checkout.
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatedSection>
+          </div>
+        </section>
+      )}
 
       {/* Footer */}
       <footer className="relative z-10 py-12 px-6 border-t border-white/20">
