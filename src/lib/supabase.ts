@@ -20,7 +20,7 @@ export type WaitlistEntry = {
   id?: string
   name: string
   email: string
-  note?: string
+  note?: string | null
   status?: string
   created_at?: string
 }
