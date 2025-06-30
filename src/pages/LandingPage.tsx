@@ -315,22 +315,13 @@ function LandingPage() {
                 </motion.p>
 
                 <motion.div variants={fadeUpVariants} className="flex flex-col sm:flex-row gap-4">
-                  {isDemoMode ? (
-                    <Link to="/dashboard">
-                      <button className="bg-[#4C8DFF] hover:bg-[#3A7AE4] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-[0_0_30px_rgba(76,141,255,0.4)] font-plus-jakarta inline-flex items-center justify-center space-x-2">
-                        <span>Try Demo Now</span>
-                        <ArrowRight className="w-5 h-5" />
-                      </button>
-                    </Link>
-                  ) : (
-                    <button
-                      onClick={() => setIsWaitlistOpen(true)}
-                      className="bg-[#4C8DFF] hover:bg-[#3A7AE4] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-[0_0_30px_rgba(76,141,255,0.4)] font-plus-jakarta inline-flex items-center justify-center space-x-2"
-                    >
-                      <span>Join Private Beta</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  )}
+                  <button
+                    onClick={() => setIsWaitlistOpen(true)}
+                    className="bg-[#4C8DFF] hover:bg-[#3A7AE4] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-[0_0_30px_rgba(76,141,255,0.4)] font-plus-jakarta inline-flex items-center justify-center space-x-2"
+                  >
+                    <span>Join Private Beta</span>
+                    <ArrowRight className="w-5 h-5" />
+                  </button>
                   
                   <Link to="/dashboard">
                     <button className="bg-white/20 hover:bg-white/30 border border-white/30 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 font-plus-jakarta inline-flex items-center justify-center space-x-2">
@@ -761,22 +752,22 @@ function LandingPage() {
               </p>
               
               <div className="space-y-4">
-                {isDemoMode ? (
-                  <Link to="/dashboard">
-                    <button className="bg-[#4C8DFF] hover:bg-[#3A7AE4] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-[0_0_30px_rgba(76,141,255,0.4)] font-plus-jakarta inline-flex items-center space-x-2">
-                      <span>Start Demo</span>
-                      <ArrowRight className="w-5 h-5" />
-                    </button>
-                  </Link>
-                ) : (
+                <div className="flex flex-col sm:flex-row justify-center gap-4">
                   <button
                     onClick={() => setIsWaitlistOpen(true)}
-                    className="bg-[#4C8DFF] hover:bg-[#3A7AE4] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-[0_0_30px_rgba(76,141,255,0.4)] font-plus-jakarta inline-flex items-center space-x-2"
+                    className="bg-[#4C8DFF] hover:bg-[#3A7AE4] text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 shadow-lg hover:shadow-[0_0_30px_rgba(76,141,255,0.4)] font-plus-jakarta inline-flex items-center justify-center space-x-2"
                   >
                     <span>Join Private Beta</span>
                     <ArrowRight className="w-5 h-5" />
                   </button>
-                )}
+                  
+                  <Link to="/dashboard">
+                    <button className="bg-white/20 hover:bg-white/30 border border-white/30 text-white px-8 py-4 rounded-full text-lg font-semibold transition-all duration-200 font-plus-jakarta inline-flex items-center justify-center space-x-2">
+                      <Eye className="w-5 h-5" />
+                      <span>Try Demo</span>
+                    </button>
+                  </Link>
+                </div>
                 
                 <div className="flex items-center justify-center space-x-6 text-sm text-white/80">
                   <div className="flex items-center space-x-2">
@@ -792,14 +783,6 @@ function LandingPage() {
                     </span>
                   </div>
                 </div>
-
-                {!isDemoMode && (
-                  <Link to="/dashboard">
-                    <button className="block mx-auto mt-4 text-white/90 hover:text-white transition-colors font-plus-jakarta">
-                      Or try the demo first →
-                    </button>
-                  </Link>
-                )}
 
                 {isDemoMode && (
                   <p className="text-sm text-white/80 font-plus-jakarta">
@@ -830,7 +813,7 @@ function LandingPage() {
 
       {/* Waitlist Modal */}
       <AnimatePresence>
-        {isWaitlistOpen && !isDemoMode && (
+        {isWaitlistOpen && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
