@@ -146,7 +146,7 @@ function LandingPage() {
       };
       
       // Insert into Supabase
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('beta_waitlist')
         .insert([waitlistEntry]);
 
@@ -165,7 +165,7 @@ function LandingPage() {
         return;
       }
 
-      console.log('✅ Waitlist entry successful:', data);
+      console.log('✅ Waitlist entry successful!');
       setSubmitStatus('success');
       setTimeout(() => {
         setIsWaitlistOpen(false);
@@ -650,6 +650,42 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Support Us Section */}
+      {!isDemoMode && donationProduct && (
+        <section className="relative z-10 py-10 px-6">
+          <div className="max-w-3xl mx-auto text-center">
+            <AnimatedSection>
+              <motion.div variants={fadeUpVariants} className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8">
+                <div className="w-16 h-16 bg-[#4C8DFF]/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <Heart className="w-8 h-8 text-[#4C8DFF]" />
+                </div>
+                <h3 className="text-2xl font-bold mb-3 font-space-grotesk">Support ScoreSweep</h3>
+                <p className="text-white/80 font-plus-jakarta mb-6 max-w-xl mx-auto">
+                  Help us build the future of credit repair technology. Your donation supports our development team and helps keep ScoreSweep accessible to everyone.
+                </p>
+                
+                <div className="max-w-xs mx-auto">
+                  <StripeCheckout 
+                    product={donationProduct}
+                    requireAuth={false}
+                    className="mb-4"
+                  >
+                    <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]">
+                      <Coffee className="w-5 h-5" />
+                      <span className="font-plus-jakarta">Buy Us a Coffee - {donationProduct.price}</span>
+                    </div>
+                  </StripeCheckout>
+                  
+                  <p className="text-sm text-white/60 font-plus-jakarta">
+                    No account required. Powered by Stripe secure checkout.
+                  </p>
+                </div>
+              </motion.div>
+            </AnimatedSection>
+          </div>
+        </section>
+      )}
+
       {/* FAQ Section */}
       <section id="faq" className="relative z-10 py-20 px-6 bg-white/10 backdrop-blur-xl">
         <div className="max-w-4xl mx-auto">
@@ -700,42 +736,6 @@ function LandingPage() {
           </AnimatedSection>
         </div>
       </section>
-
-      {/* Support Us Section */}
-      {!isDemoMode && donationProduct && (
-        <section className="relative z-10 py-10 px-6">
-          <div className="max-w-3xl mx-auto text-center">
-            <AnimatedSection>
-              <motion.div variants={fadeUpVariants} className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-8">
-                <div className="w-16 h-16 bg-[#4C8DFF]/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <Heart className="w-8 h-8 text-[#4C8DFF]" />
-                </div>
-                <h3 className="text-2xl font-bold mb-3 font-space-grotesk">Support ScoreSweep</h3>
-                <p className="text-white/80 font-plus-jakarta mb-6 max-w-xl mx-auto">
-                  Help us build the future of credit repair technology. Your donation supports our development team and helps keep ScoreSweep accessible to everyone.
-                </p>
-                
-                <div className="max-w-xs mx-auto">
-                  <StripeCheckout 
-                    product={donationProduct}
-                    requireAuth={false}
-                    className="mb-4"
-                  >
-                    <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white px-6 py-3 rounded-full font-semibold shadow-lg transition-all duration-300 flex items-center justify-center space-x-2 hover:shadow-[0_0_20px_rgba(236,72,153,0.4)]">
-                      <Coffee className="w-5 h-5" />
-                      <span className="font-plus-jakarta">Buy Us a Coffee - {donationProduct.price}</span>
-                    </div>
-                  </StripeCheckout>
-                  
-                  <p className="text-sm text-white/60 font-plus-jakarta">
-                    No account required. Powered by Stripe secure checkout.
-                  </p>
-                </div>
-              </motion.div>
-            </AnimatedSection>
-          </div>
-        </section>
-      )}
 
       {/* CTA Section */}
       <section className="relative z-10 py-20 px-6">
