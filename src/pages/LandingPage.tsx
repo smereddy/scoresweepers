@@ -138,16 +138,17 @@ function LandingPage() {
     try {
       console.log('📝 Submitting waitlist entry...');
       
+      // Create the waitlist entry object
       const waitlistEntry: WaitlistEntry = {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         note: note.trim() || null
       };
       
+      // Insert into Supabase
       const { data, error } = await supabase
         .from('beta_waitlist')
-        .insert([waitlistEntry])
-        .select();
+        .insert([waitlistEntry]);
 
       if (error) {
         console.error('❌ Supabase error:', error);
