@@ -75,14 +75,6 @@ vi.mock('../lib/supabase', () => ({
       }),
     }),
   },
-  type WaitlistEntry: {
-    id?: string
-    name: string
-    email: string
-    note?: string
-    status?: string
-    created_at?: string
-  }
 }));
 
 // Mock environment variables
