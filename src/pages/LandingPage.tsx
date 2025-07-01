@@ -114,27 +114,6 @@ function LandingPage() {
       return;
     }
 
-    // If using mock auth or demo mode, simulate waitlist submission
-    if (isUsingMockAuth || isDemoMode) {
-      console.log('📝 Mock waitlist submission:', { name, email, note });
-      
-      // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      setSubmitStatus('success');
-      setTimeout(() => {
-        setIsWaitlistOpen(false);
-        setName('');
-        setEmail('');
-        setNote('');
-        setSubmitStatus('idle');
-        setSubmitError('');
-      }, 2000);
-      
-      setIsSubmitting(false);
-      return;
-    }
-
     try {
       console.log('📝 Submitting waitlist entry...');
       
@@ -145,7 +124,7 @@ function LandingPage() {
         note: note.trim() || null
       };
       
-      // Insert into Supabase
+      // Always attempt to insert into Supabase, even in demo/mock mode
       const { error } = await supabase
         .from('beta_waitlist')
         .insert([waitlistEntry]);
